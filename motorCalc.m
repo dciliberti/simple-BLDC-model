@@ -1,16 +1,19 @@
-function [Imot,Pmot,Pload_array,Qload,omega,eff] = motorCalc(V,Kv,I0,Rm,Pmax)
-% MOTORCALC(V,KV,R;,PLOAD) calculates motor current, power, angular speed,
+function [Imot,Pmot,Pload_array,Qload,omega,eff] = motorCalc(V,Kv,I0,Rm,Imax)
+% MOTORCALC(V,KV,I0,Rm) calculates motor current, power, angular speed,
 % and torque from motor characteristics and applied voltage.
-% A virtual load is applied from zero to the maximum possible value.
+% MOTORCALC(V,KV,I0,Rm,Imax) truncate output values when I > Imax.
+% A virtual load is applied from zero to the maximum possible value to
+% generate an array of output.
+
+% Check if maximum current has been assigned
+if nargin < 5
+   Imax = 0; 
+end
 
 Piron = V * I0;
 Pload_max = 0.999*(V^2/(4*Rm) - Piron);
 
-if Pload_max > Pmax
-    Pload_max = Pmax;
-end
-
-steps = 100;
+steps = 1000;
 Pload_array = linspace(0,Pload_max,steps);
 
 c = 0;
@@ -29,6 +32,17 @@ for Pload = Pload_array
     omega(c) = 2*pi/60 * RPM;
     Qload(c) = Pload/omega(c);
     eff(c) = Pload/Pmot(c);
+end
+
+% Delete motor data when motor current is above max current
+if Imax > 0
+    idx = find(Imot < Imax);
+    Pload_array = Pload_array(idx);
+    Imot = Imot(idx);
+    Pmot = Pmot(idx);
+    omega = omega(idx);
+    Qload = Qload(idx);
+    eff = eff(idx);
 end
 
 end

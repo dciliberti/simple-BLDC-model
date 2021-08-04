@@ -2,7 +2,7 @@ close all; clearvars; clc
 
 %% Input data
 V = 36.0;               % Voltage
-Pmax = 300;             % max shaft power, W (use also for axis limits)
+Imax = 15;              % max current, Ampere (useful for axis limits)
 
 % Motor constants
 Kv = 300;               % Motor RPM/Volt constant
@@ -11,7 +11,7 @@ Rm = 0.032;             % Motor internal resistance, Ohm
 
 %% Calculate and plot motor performance
 
-[Imot, Pmot, Pload, Qload, omega, eff] = motorCalc(V,Kv,I0,Rm,Pmax);
+[Imot, Pmot, Pload, Qload, omega, eff] = motorCalc(V,Kv,I0,Rm,Imax);
 RPM = omega*60/(2*pi);
 
 t = tiledlayout(3,1);
