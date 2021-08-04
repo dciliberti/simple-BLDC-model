@@ -1,3 +1,4 @@
+[![View simple-BLDC-model on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://it.mathworks.com/matlabcentral/fileexchange/97082-simple-bldc-model)
 # simple-BLDC-model
 A simple (and probably inaccurate) brushless DC motor modelling script.
 
