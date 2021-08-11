@@ -35,13 +35,12 @@ RPM = omega*60/(2*pi);
 
 t = tiledlayout(3,1);
 ax1 = nexttile;
-yyaxis left
 plot(Imot,Pmot,'LineWidth',2)
-ylabel('Electric Power, W')
-%
-yyaxis right
+ylabel('Power, W')
+hold on
 plot(Imot,Pload,'LineWidth',2)
-ylabel('Shaft Power, W')
+hold off
+legend('Electric power','Shaft power','Location','best')
 grid on
 
 ax2 = nexttile;
