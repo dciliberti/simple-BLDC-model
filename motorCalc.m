@@ -5,7 +5,7 @@ function [Imot,Pmot,Pload_array,Qload,omega,eff] = motorCalc(V,Kv,I0,Rm,Imax)
 % A virtual load is applied from zero to the maximum possible value to
 % generate an array of output.
 
-%     Copyright (C) 2021 Danilo Ciliberti danilo.ciliberti@unina.it
+%     Copyright (C) 2022 Danilo Ciliberti danilo.ciliberti@unina.it
 %
 %     This program is free software: you can redistribute it and/or modify
 %     it under the terms of the GNU General Public License as published by

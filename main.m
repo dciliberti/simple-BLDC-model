@@ -2,7 +2,7 @@
 % A simple (and probably inaccurate) brushless DC motor modelling script
 % See companion PDF file generated from the MATLAB live script for details
 %
-%     Copyright (C) 2021 Danilo Ciliberti danilo.ciliberti@unina.it
+%     Copyright (C) 2022 Danilo Ciliberti danilo.ciliberti@unina.it
 %
 %     This program is free software: you can redistribute it and/or modify
 %     it under the terms of the GNU General Public License as published by
