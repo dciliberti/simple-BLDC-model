@@ -20,13 +20,13 @@
 close all; clearvars; clc
 
 %% Input data
-V = 36.0;               % Voltage
-Imax = 15;              % max current, Ampere (useful for axis limits)
+V = 15.0;               % Voltage
+Imax = 60;              % max current, Ampere (useful for axis limits)
 
 % Motor constants
-Kv = 300;               % Motor RPM/Volt constant
-I0 = 1.8;               % Motor idle (no load) current, A
-Rm = 0.032;             % Motor internal resistance, Ohm
+Kv = 700;               % Motor RPM/Volt constant
+I0 = 1.5;               % Motor idle (no load) current, A
+Rm = 0.034;             % Motor internal resistance, Ohm
 
 %% Calculate and plot motor performance
 
