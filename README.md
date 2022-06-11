@@ -7,3 +7,9 @@ This software is entirely written in MATLAB and comes with two main files (a sta
 Both the standard and the live script call the same MATLAB function to calculate the motor performance and both show the same charts in the end. The difference is that the MATLAB live script is interactive and shows live updates when changing the input parameters, while the MATLAB standard script can be easily expanded with other features or be included in other programs.
 
 ![example-output-charts](example.png)
+
+## Additional features
+Actually, the `main.m` script also plots the motor map. The additional `propMatch.m` script provides matching between motor and propeller, where the latter's data are loaded from external file.
+
+![example-output-motor-map](motor-map-example.png)
+![example-output-motor-map](prop-match-example.png)

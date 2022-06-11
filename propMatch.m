@@ -1,5 +1,5 @@
 % Prop Match
-% Script to match user-imported propeller data with motor data
+% Script to match user-imported propeller data with motor data.
 %
 % This script makes use of the functions set POLYFITZERO:
 % Mark Mikofski (2022). polyfitZero 
