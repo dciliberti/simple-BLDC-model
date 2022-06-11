@@ -66,3 +66,31 @@ xticklabels([ax1,ax2],{})
 xlabel(t,'Motor current, A')
 title(t,['Motor performance at ',num2str(V,'%.1f'),' V'])
 t.TileSpacing = 'compact';
+
+%% Build a motor map
+
+volt = linspace(4,15,10);    % give reasonable voltage range
+maxTorque = zeros(1,numel(volt));
+giriMinMaxTorque = zeros(1,numel(volt));
+for idx = 1:numel(volt)
+
+    [~, ~, ~, torque, radSec, ~] = motorCalc(volt(idx),Kv,I0,Rm,Imax);
+    giriMin = radSec*60/(2*pi);
+
+    maxTorque(idx) = max(torque);
+    giriMinMaxTorque(idx) = interp1(torque,giriMin,maxTorque(idx));
+
+end
+
+xArray = [giriMinMaxTorque, fliplr(giriMin(1:end-1))];
+yArray = [maxTorque, fliplr(torque(1:end-1))];
+
+% [x, y] = meshgrid(linspace(0,max(RPM))./1000, linspace(min(maxTorque),max(maxTorque)));  % x: RPM, y: torque
+% z = griddata(r,c,s,x,y);
+
+figure, hold on
+area(xArray,yArray,'FaceAlpha',0.5)
+% contour(X,Y,volt)
+hold off, grid on
+xlabel('RPM'), ylabel('Torque, Nm')
+title('Motor map')
