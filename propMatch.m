@@ -31,7 +31,8 @@ Rm = 0.034;             % motor internal resistance, Ohm
 
 % Import propeller data from csv file. Columns order as follows:
 % RPM, Power (W), Thrust (N), Torque (Nm)
-propTable = readtable(['dep-prop-flowspeed-35ms.csv']);
+filename = 'dep-prop-flowspeed-35ms.csv';
+propTable = readtable(filename);
 propData = propTable.Variables;
 
 % Propeller data curves fitting with RPM as the independent variable
@@ -58,37 +59,40 @@ for V = volt
 
     throttle = V/Vmax*100;  % assume throttle linear with voltage
 
-    Imax = 1200/V/5;        % max current, Ampere (usually limited by power supply)
+%     Imax = 1200/V/5;        % max current, Ampere (usually limited by power supply)
     % (in my case I need 5 motors on a power supply of 1200 W working at voltage V)
     % (it should be the max current sustainable by the motor, but in my
     % case constraints are different. WARNING: motor curves will be limited
     % by this Imax, and that is what I want)
+    Imax = 60;              % max current, Ampere
 
-    [Imot, Pmot, Pload, Qload, omega, eff] = motorCalc(V,Kv,I0,Rm,Imax);
+    [Imot, Pelec, Pshaft, Torque, omega, ~] = motorCalc(V,Kv,I0,Rm,Imax);
     RPM = omega*60/(2*pi);
 
     % Motor data curves fitting with RPM as the independent variable
     % (usually a linear fit is very good)
-    funMotPower = polyfit(RPM,Pload,1);
-    funMotTorque = polyfit(RPM,Qload,1);
+    funMotElecPower = polyfit(RPM,Pelec,1);
+    funMotShaftPower = polyfit(RPM,Pshaft,1);
+    funMotTorque = polyfit(RPM,Torque,1);
     funMotCurrent = polyfit(RPM,Imot,1);
 
     % Search for curves intersection
     xval = linspace(min(RPM),max(RPM)); % limit the search to the available motor RPM data
     
-    if any(diff(sign( polyval(funPropPower,xval) - polyval(funMotPower,xval) )))
+    if any(diff(sign( polyval(funPropPower,xval) - polyval(funMotShaftPower,xval) )))
         
-        xPowerMatch = fzero(@(x) polyval(funPropPower,x)-polyval(funMotPower,x),...
+        xPowerMatch = fzero(@(x) polyval(funPropPower,x)-polyval(funMotShaftPower,x),...
             [min(RPM), max(RPM)]);
 
         c = c + 1; %#ok<*SAGROW> 
         matchingRPM(c) = xPowerMatch;
-        matchingCurrent(c) = polyval(funMotCurrent,xPowerMatch);
-        matchingPower(c) = polyval(funMotPower,xPowerMatch); 
         matchingThrottle(c) = throttle;
+        matchingElecPower(c) = polyval(funMotElecPower,xPowerMatch);
+        matchingShaftPower(c) = polyval(funMotShaftPower,xPowerMatch);
+        matchingCurrent(c) = polyval(funMotCurrent,xPowerMatch);
 
         figure(1)
-        plot(RPM,Pload,'LineWidth',2, ...
+        plot(RPM,Pshaft,'LineWidth',2, ...
             'DisplayName',[num2str(V,'%.1f'),'V, \Phi=', num2str(throttle,'%.0f'), '%'])
         plot(xPowerMatch,polyval(funPropPower,xPowerMatch),'ko','MarkerSize',6,...
             'HandleVisibility','off')
@@ -98,7 +102,7 @@ for V = volt
             [min(RPM), max(RPM)]);
 
         figure(2)
-        plot(RPM,Qload,'LineWidth',2, ...
+        plot(RPM,Torque,'LineWidth',2, ...
             'DisplayName',[num2str(V,'%.1f'),'V, \Phi=', num2str(throttle,'%.0f'), '%'])
         plot(xTorqueMatch,polyval(funPropTorque,xTorqueMatch),'ko','MarkerSize',6,...
             'HandleVisibility','off')
@@ -112,13 +116,13 @@ end
 
 figure(1)
 grid on, hold off, legend(Location="best")
-xlabel('RPM'), ylabel('Power, W')
-title('Propeller-motor matching on shaft power')
+xlabel('RPM'), ylabel('Shaft Power, W')
+title(filename,'Interpreter','none')
 
 figure(2)
 grid on, hold off, legend(Location="best")
 xlabel('RPM'), ylabel('Torque, Nm')
-title('Propeller-motor matching on torque')
+title(filename,'Interpreter','none')
 
 %% Summary figure
 matchingThrust = polyval(funPropThrust,matchingRPM);
@@ -135,9 +139,11 @@ plot(matchingRPM,matchingCurrent,'LineWidth',2)
 ylabel('Current, A')
 grid on
 
-ax3 = nexttile;
-plot(matchingRPM,matchingPower,'LineWidth',2)
-ylabel('Shaft Power, W')
+ax3 = nexttile; hold on
+plot(matchingRPM,matchingShaftPower,'LineWidth',2)
+plot(matchingRPM,matchingElecPower,'LineWidth',2)
+hold off; legend('Shaft Power','Electric Power','Location','southeast')
+ylabel('Power, W')
 grid on
 
 ax4 = nexttile;
@@ -146,7 +152,26 @@ ylabel('Thrust, N')
 grid on
 
 linkaxes([ax1,ax2,ax3,ax4],'x');
-xticklabels([ax1,ax2],{})
+xticklabels([ax1,ax2,ax3],{})
 xlabel(t,'RPM')
-title(t,'Propeller-motor performance')
+title(t,filename,'interpreter','none')
 t.TileSpacing = 'compact';
+
+%% Limited power
+Pmax = 1200/5;            % max electric power available per motor, Watt
+yline(ax3,Pmax,'--','color',ax3.ColorOrder(2,:),'LineWidth',2,'DisplayName','Limited Power')
+RPMmax = interp1(matchingElecPower,matchingRPM,Pmax);
+xline(ax1,RPMmax,'--','color',ax3.ColorOrder(2,:),'LineWidth',2,'HandleVisibility','off')
+xline(ax2,RPMmax,'--','color',ax3.ColorOrder(2,:),'LineWidth',2,'HandleVisibility','off')
+xline(ax3,RPMmax,'--','color',ax3.ColorOrder(2,:),'LineWidth',2,'HandleVisibility','off')
+xline(ax4,RPMmax,'--','color',ax3.ColorOrder(2,:),'LineWidth',2,'HandleVisibility','off')
+
+maxUsefulThrottle = interp1(matchingRPM,matchingThrottle,RPMmax);
+usefulThrottle = [matchingThrottle(matchingThrottle<maxUsefulThrottle), maxUsefulThrottle, 100];
+limitedRPM = [matchingRPM(matchingThrottle<maxUsefulThrottle), RPMmax, RPMmax];
+figure(4), hold on
+plot(matchingThrottle,matchingRPM,'LineWidth',2)
+plot(usefulThrottle,limitedRPM,'LineWidth',2)
+xlabel('Throttle, %'), ylabel('RPM'), grid on
+title(filename,'Interpreter','none')
+legend('Unlimited Power','Limited Power','Location','northwest')
