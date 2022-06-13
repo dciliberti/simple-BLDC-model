@@ -27,11 +27,12 @@ close all; clearvars; clc
 Vmax = 15.0;            % max voltage (limited by the motor)
 Kv = 700;               % motor RPM/Volt constant
 I0 = 1.5;               % motor idle (no load) current, A
+Imax = 60;              % max current, A
 Rm = 0.034;             % motor internal resistance, Ohm
 
 % Import propeller data from csv file. Columns order as follows:
 % RPM, Power (W), Thrust (N), Torque (Nm)
-filename = 'dep-prop-flowspeed-35ms.csv';
+filename = 'therm-prop-flowspeed-35ms.csv';
 propTable = readtable(filename);
 propData = propTable.Variables;
 
@@ -58,13 +59,6 @@ volt = linspace(4,Vmax,10); % give a reasonable lower voltage
 for V = volt
 
     throttle = V/Vmax*100;  % assume throttle linear with voltage
-
-%     Imax = 1200/V/5;        % max current, Ampere (usually limited by power supply)
-    % (in my case I need 5 motors on a power supply of 1200 W working at voltage V)
-    % (it should be the max current sustainable by the motor, but in my
-    % case constraints are different. WARNING: motor curves will be limited
-    % by this Imax, and that is what I want)
-    Imax = 60;              % max current, Ampere
 
     [Imot, Pelec, Pshaft, Torque, omega, ~] = motorCalc(V,Kv,I0,Rm,Imax);
     RPM = omega*60/(2*pi);
