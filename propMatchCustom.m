@@ -1,12 +1,14 @@
-% Prop Match
-% Script to match user-imported propeller data with motor data.
+% MOTOR-PROPELLER MATCH
+% Script to match user-imported propeller data at constant flow speed (and
+% variable RPM) with motor data.
 %
 % This script makes use of the functions set POLYFITZERO:
+%
 % Mark Mikofski (2022). polyfitZero 
 % (https://www.mathworks.com/matlabcentral/fileexchange/35401-polyfitzero), 
 % MATLAB Central File Exchange. Retrieved June 9, 2022.
 %
-%     Copyright (C) 2022 Danilo Ciliberti danilo.ciliberti@unina.it
+%     Copyright (C) 2023 Danilo Ciliberti danilo.ciliberti@unina.it
 %
 %     This program is free software: you can redistribute it and/or modify
 %     it under the terms of the GNU General Public License as published by
@@ -38,7 +40,8 @@ propData = propTable.Variables;
 
 % Propeller data curves fitting with RPM as the independent variable
 % (usually a quadratic fit is good, but we need to intercept zero with a
-% horizontal tangent)
+% horizontal tangent). It expects data columns in this order:
+% RPM, Power (W), Thrust (N), Torque (Nm)
 funPropPower = polyfitB0(propData(:,1),propData(:,2),2,0);
 funPropThrust = polyfitB0(propData(:,1),propData(:,3),2,0);
 funPropTorque = polyfitB0(propData(:,1),propData(:,4),2,0);
