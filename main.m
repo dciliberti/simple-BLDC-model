@@ -65,26 +65,26 @@ ylabel('Efficiency')
 linkaxes([ax1,ax2,ax3],'x');
 xticklabels([ax1,ax2],{})
 xlabel(t,'Motor current, A')
-title(t,[motorName, ' at ',num2str(V,'%.1f'),' V'],'interpreter','none')
+title(t,[motorName, ' (',num2str(V,'%.1f'),' V)'],'interpreter','none')
 t.TileSpacing = 'compact';
 
 %% Build a motor map
 
-volt = linspace(4,15,10);    % give reasonable voltage range
+volt = linspace(4,V,10);    % give reasonable voltage range
 maxTorque = zeros(1,numel(volt));
-giriMinMaxTorque = zeros(1,numel(volt));
+revMaxTorque = zeros(1,numel(volt));
 x = []; %#ok<*AGROW> 
 y = [];
 z = [];
 for idx = 1:numel(volt)
 
     [~, ~, ~, torque, radSec, etaMot] = motorCalc(volt(idx),Kv,I0,Rm,Imax);
-    giriMin = radSec*60/(2*pi);
+    revMinute = radSec*60/(2*pi);
 
-    maxTorque(idx) = max(torque);
-    giriMinMaxTorque(idx) = interp1(torque,giriMin,maxTorque(idx));
+    [maxTorque(idx), pos] = max(torque);
+    revMaxTorque(idx) = revMinute(pos);
 
-    x = [x, giriMin];
+    x = [x, revMinute];
     y = [y, torque];
     z = [z, etaMot];
 
@@ -92,16 +92,19 @@ end
 
 figure, hold on
 
-xArray = [giriMinMaxTorque, fliplr(giriMin(1:end-1))];
+xArray = [revMaxTorque, fliplr(revMinute(1:end-1))];
 yArray = [maxTorque, fliplr(torque(1:end-1))];
 area(xArray,yArray,'FaceAlpha',0.5)
 
-[X, Y] = meshgrid(linspace(min(x),max(x))./1000, linspace(min(y),max(y)));  % x: RPM, y: torque
-Z = griddata(x,y,z,X*1000,Y);
-levels = [0.7,0.8,0.9,0.95];
-[C,H] = contour(X*1000,Y,Z,levels,'black');
+[xNorm, Cx, Sx] = normalize(x);
+[yNorm, Cy, Sy] = normalize(y);
+[zNorm, Cz, Sz] = normalize(z);
+[X, Y] = meshgrid(linspace(min(xNorm),max(xNorm)), linspace(min(yNorm),max(yNorm)));  % x: RPM, y: torque
+Z = griddata(xNorm,yNorm,zNorm,X,Y);
+levels = 0.70:0.05:0.95;
+[C,H] = contour(X*Sx+Cx,Y*Sy+Cy,Z*Sz+Cz,levels,'black');
 clabel(C,H,levels)
 
 hold off, grid on
 xlabel('RPM'), ylabel('Torque, Nm')
-title([motorName, ' map'],'interpreter','none')
+title([motorName, ' (map)'],'interpreter','none')
