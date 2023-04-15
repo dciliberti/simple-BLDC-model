@@ -9,7 +9,8 @@ Both the standard and the live script call the same MATLAB function to calculate
 ![example-output-charts](example.png)
 
 ## Additional features
-Actually, the `main.m` script also plots the motor map. The additional `propMatch.m` script provides matching between motor and propeller, where the latter's data are loaded from external file.
+Actually, the `main.m` script also plots the motor map. The additional `propMatchCustom.m` script provides matching between motor and propeller, where the latter's data are loaded from external file.
 
 ![example-output-motor-map](motor-map-example.png)
+
 ![example-output-motor-map](prop-match-example.png)
