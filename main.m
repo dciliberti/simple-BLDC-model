@@ -20,14 +20,14 @@
 close all; clearvars; clc
 
 %% Input data
-motorName = 'T-Motor AT4130 300 Kv';
-V = 15.0;               % Voltage
+motorName = 'Hacker A60-18-L-V4-kv149';
+V = 45.0;               % Voltage
 Imax = 60;              % max current, Ampere (useful for axis limits)
 
 % Motor constants
-Kv = 700;               % Motor RPM/Volt constant
-I0 = 1.5;               % Motor idle (no load) current, A
-Rm = 0.034;             % Motor internal resistance, Ohm
+Kv = 149;               % Motor RPM/Volt constant
+I0 = 1.6;               % Motor idle (no load) current, A
+Rm = 0.020;             % Motor internal resistance, Ohm
 
 %% Calculate and plot motor performance
 
