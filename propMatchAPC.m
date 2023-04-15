@@ -146,8 +146,8 @@ for queryVelocity = velArray % cycle over velocity array
 end
 
 %% Cycle over several voltage (simulate motor throttle)
-% cMot = 0;  % motor-prop matching counter
-cArr = 0;   % array counter
+cMot = 0;  % motor-prop matching counter
+% cArr = 0;   % array counter
 volt = linspace(Vmax/10,Vmax,10); % sweep over 10 increments in throttle
 for V = volt
 
@@ -174,7 +174,7 @@ for V = volt
     % Search for curves intersection
     xval = linspace(min(motRPM),max(motRPM)); % limit the search to the available motor RPM data
 
-    cMot = 0; % motor-prop matching counter (reset for each voltage)
+%     cMot = 0; % motor-prop matching counter (reset for each voltage)
     for cProp = 1:length(velArray)
         if any(diff(sign( funPropPower{cProp}(xval) - polyval(funMotShaftPower,xval) )))     % any(diff(sign( polyval(funPropPower{cProp},xval) - polyval(funMotShaftPower,xval) )))
 
@@ -209,20 +209,24 @@ for V = volt
             plot(xTorqueMatch,funPropTorque{cProp}(xTorqueMatch),...
                 'ko','MarkerSize',6,'HandleVisibility','off')
 
+            % Collect throttle, airspeed, rpm, and power into an array
+            xPowerMatchArray(cMot,:) = [throttle,velArray(cProp),...
+                xPowerMatch,funPropPower{cProp}(xPowerMatch)];
+
         else
             disp(['No intersection found for motor at ', num2str(V), ...
                 ' volt and propeller airspeed ', num2str(velArray(cProp)), ' m/s'])
         end % if-else
 
-        % Write an array with airspeed, RPM, power, and torque matched
-        %         if cMot > 0 % if at least an intersection is found
-        %
-        %             cArr = cArr + 1;
-        %             xPowerMatchArray{cArr} = [velArray(cProp),xPowerMatch];
-        %
-        %         end % if
-
     end % for-loop sweeping airspeed array
+
+    % Write an array with airspeed, RPM, power, and torque matched
+%     if cMot > 0 % if at least an intersection is found
+% 
+%         cArr = cArr + 1;
+%         xPowerMatchArray{cArr} = [velArray(cProp),xPowerMatch];
+% 
+%     end % if
 
 end % for-loop sweeping voltage array
 
@@ -234,6 +238,33 @@ title(filename,'Interpreter','none')
 figure(2)
 ylim([0,inf]), grid on, hold off, legend(Location="best")
 xlabel('RPM'), ylabel('Torque, Nm')
+title(filename,'Interpreter','none')
+
+%% Plotting vs airspeed
+
+% Distinguish each throttle value
+for idx = 1:length(xPowerMatchArray)
+    sepIdx = find(diff(xPowerMatchArray(:,1)));
+end
+
+% Make different curves for different throttle values
+figure(3), hold on
+plot(xPowerMatchArray(1:sepIdx(1),2), ...
+    xPowerMatchArray(1:sepIdx(1),4), ...
+    'LineWidth',2,...
+    'DisplayName',['\Phi=', num2str(xPowerMatchArray(sepIdx(1),1),'%.0f'), '%'])
+for idx = 2:length(sepIdx)
+    plot(xPowerMatchArray(sepIdx(idx-1)+1:sepIdx(idx),2), ...
+        xPowerMatchArray(sepIdx(idx-1)+1:sepIdx(idx),4), ...
+        'LineWidth',2, ...
+        'DisplayName',['\Phi=', num2str(xPowerMatchArray(sepIdx(idx),1),'%.0f'), '%'])
+end
+plot(xPowerMatchArray(sepIdx(end)+1:end,2), ...
+    xPowerMatchArray(sepIdx(end)+1:end,4), ...
+    'LineWidth',2, ...
+    'DisplayName',['\Phi=', num2str(xPowerMatchArray(end,1),'%.0f'), '%'])
+hold off, grid on, legend(Location="best")
+xlabel('Velocity, km/h'), ylabel('Shaft power, W')
 title(filename,'Interpreter','none')
 
 return
