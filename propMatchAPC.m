@@ -129,9 +129,9 @@ for queryVelocity = velArray % cycle over velocity array
     %     funPropPower{cProp} = polyfit(interpPower(:,1),interpPower(:,2),2);
     %     funPropThrust{cProp} = polyfit(interpThrust(:,1),interpThrust(:,2),2);
     %     funPropTorque{cProp} = polyfit(interpTorque(:,1),interpTorque(:,2),2);
-    funPropPower{cProp} = @(xq) interp1(interpPower(:,1),interpPower(:,2),xq,'linear','extrap');
-    funPropThrust{cProp} = @(xq) interp1(interpThrust(:,1),interpThrust(:,2),xq,'linear','extrap');
-    funPropTorque{cProp} = @(xq) interp1(interpTorque(:,1),interpTorque(:,2),xq,'linear','extrap');
+    funPropPower{cProp} = @(rpm) interp1(interpPower(:,1),interpPower(:,2),rpm,'linear','extrap');
+    funPropThrust{cProp} = @(rpm) interp1(interpThrust(:,1),interpThrust(:,2),rpm,'linear','extrap');
+    funPropTorque{cProp} = @(rpm) interp1(interpTorque(:,1),interpTorque(:,2),rpm,'linear','extrap');
 
     set(0,'CurrentFigure',f1), hold on
 %     yProp = polyval(funPropPower{cProp},queryRPM);    % y array of propeller power
@@ -209,9 +209,9 @@ for V = volt
             plot(xTorqueMatch,funPropTorque{cProp}(xTorqueMatch),...
                 'ko','MarkerSize',6,'HandleVisibility','off')
 
-            % Collect throttle, airspeed, rpm, and power into an array
+            % Collect throttle, airspeed, RPM, power, and thrust into an array
             xPowerMatchArray(cMot,:) = [throttle,velArray(cProp),...
-                xPowerMatch,funPropPower{cProp}(xPowerMatch)];
+                xPowerMatch,funPropPower{cProp}(xPowerMatch),funPropThrust{cProp}(xPowerMatch)];
 
         else
             disp(['No intersection found for motor at ', num2str(V), ...
@@ -219,14 +219,6 @@ for V = volt
         end % if-else
 
     end % for-loop sweeping airspeed array
-
-    % Write an array with airspeed, RPM, power, and torque matched
-%     if cMot > 0 % if at least an intersection is found
-% 
-%         cArr = cArr + 1;
-%         xPowerMatchArray{cArr} = [velArray(cProp),xPowerMatch];
-% 
-%     end % if
 
 end % for-loop sweeping voltage array
 
@@ -247,7 +239,7 @@ for idx = 1:length(xPowerMatchArray)
     sepIdx = find(diff(xPowerMatchArray(:,1)));
 end
 
-% Make different curves for different throttle values
+% Make different curves for different throttle values (power vs airspeed)
 figure(3), hold on
 plot(xPowerMatchArray(1:sepIdx(1),2), ...
     xPowerMatchArray(1:sepIdx(1),4), ...
@@ -265,7 +257,29 @@ plot(xPowerMatchArray(sepIdx(end)+1:end,2), ...
     'DisplayName',['\Phi=', num2str(xPowerMatchArray(end,1),'%.0f'), '%'])
 hold off, grid on, legend(Location="best")
 xlabel('Velocity, km/h'), ylabel('Shaft power, W')
-title(filename,'Interpreter','none')
+title('Coupled propeller-motor power')
+
+
+% Make different curves for different throttle values (thrust vs airspeed)
+figure(4), hold on
+plot(xPowerMatchArray(1:sepIdx(1),2), ...
+    xPowerMatchArray(1:sepIdx(1),5), ...
+    'LineWidth',2,...
+    'DisplayName',['\Phi=', num2str(xPowerMatchArray(sepIdx(1),1),'%.0f'), '%'])
+for idx = 2:length(sepIdx)
+    plot(xPowerMatchArray(sepIdx(idx-1)+1:sepIdx(idx),2), ...
+        xPowerMatchArray(sepIdx(idx-1)+1:sepIdx(idx),5), ...
+        'LineWidth',2, ...
+        'DisplayName',['\Phi=', num2str(xPowerMatchArray(sepIdx(idx),1),'%.0f'), '%'])
+end
+plot(xPowerMatchArray(sepIdx(end)+1:end,2), ...
+    xPowerMatchArray(sepIdx(end)+1:end,5), ...
+    'LineWidth',2, ...
+    'DisplayName',['\Phi=', num2str(xPowerMatchArray(end,1),'%.0f'), '%'])
+hold off, grid on, legend(Location="best")
+xlabel('Velocity, km/h'), ylabel('Thrust, N')
+title('Coupled propeller-motor thrust')
+
 
 return
 %% Summary figure
