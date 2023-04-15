@@ -30,7 +30,7 @@ close all; clearvars; clc
 Vmax = 45.0;            % max voltage (limited by the motor)
 Kv = 149;               % motor RPM/Volt constant
 I0 = 1.6;               % motor idle (no load) current, A
-Imax = 85;              % max current, A
+Imax = 60;              % max current, A
 Rm = 0.020;             % motor internal resistance, Ohm
 
 addpath('apc')
@@ -123,24 +123,31 @@ for queryVelocity = velArray % cycle over velocity array
     % (usually a quadratic fit is good, but we need to intercept zero with a
     % horizontal tangent).
     cProp = cProp + 1;
-    funPropPower{cProp} = polyfitB0(interpPower(:,1),interpPower(:,2),2,0);
-    funPropThrust{cProp} = polyfitB0(interpThrust(:,1),interpThrust(:,2),2,0);
-    funPropTorque{cProp} = polyfitB0(interpTorque(:,1),interpTorque(:,2),2,0);
+    %     funPropPower{cProp} = polyfitB0(interpPower(:,1),interpPower(:,2),2,0);
+    %     funPropThrust{cProp} = polyfitB0(interpThrust(:,1),interpThrust(:,2),2,0);
+    %     funPropTorque{cProp} = polyfitB0(interpTorque(:,1),interpTorque(:,2),2,0);
+    %     funPropPower{cProp} = polyfit(interpPower(:,1),interpPower(:,2),2);
+    %     funPropThrust{cProp} = polyfit(interpThrust(:,1),interpThrust(:,2),2);
+    %     funPropTorque{cProp} = polyfit(interpTorque(:,1),interpTorque(:,2),2);
+    funPropPower{cProp} = @(xq) interp1(interpPower(:,1),interpPower(:,2),xq,'linear','extrap');
+    funPropThrust{cProp} = @(xq) interp1(interpThrust(:,1),interpThrust(:,2),xq,'linear','extrap');
+    funPropTorque{cProp} = @(xq) interp1(interpTorque(:,1),interpTorque(:,2),xq,'linear','extrap');
 
     set(0,'CurrentFigure',f1), hold on
-    yProp = polyval(funPropPower{cProp},queryRPM);    % y array of propeller power
-    plot(queryRPM,yProp,'LineWidth',2,...
-        'DisplayName',['Prop at ', num2str(queryVelocity), ' m/s'])
+%     yProp = polyval(funPropPower{cProp},queryRPM);    % y array of propeller power
+    plot(queryRPM,funPropPower{cProp}(queryRPM),'LineWidth',2,...
+        'DisplayName',['Prop at ', num2str(queryVelocity), ' km/h'])
 
     set(0,'CurrentFigure',f2), hold on
-    yProp = polyval(funPropTorque{cProp},queryRPM);    % y array of propeller torque
-    plot(queryRPM,yProp,'LineWidth',2,...
-        'DisplayName',['Prop at ', num2str(queryVelocity), ' m/s'])
+%     yProp = polyval(funPropTorque{cProp},queryRPM);    % y array of propeller torque
+    plot(queryRPM,funPropTorque{cProp}(queryRPM),'LineWidth',2,...
+        'DisplayName',['Prop at ', num2str(queryVelocity), ' km/h'])
 
 end
 
 %% Cycle over several voltage (simulate motor throttle)
-cMot = 0;  % counter
+% cMot = 0;  % motor-prop matching counter
+cArr = 0;   % array counter
 volt = linspace(Vmax/10,Vmax,10); % sweep over 10 increments in throttle
 for V = volt
 
@@ -167,46 +174,65 @@ for V = volt
     % Search for curves intersection
     xval = linspace(min(motRPM),max(motRPM)); % limit the search to the available motor RPM data
 
+    cMot = 0; % motor-prop matching counter (reset for each voltage)
     for cProp = 1:length(velArray)
-        if any(diff(sign( polyval(funPropPower{cProp},xval) - polyval(funMotShaftPower,xval) )))
-
-            xPowerMatch = fzero(@(x) polyval(funPropPower{cProp},x)-polyval(funMotShaftPower,x),...
-                [min(motRPM), max(motRPM)]);
+        if any(diff(sign( funPropPower{cProp}(xval) - polyval(funMotShaftPower,xval) )))     % any(diff(sign( polyval(funPropPower{cProp},xval) - polyval(funMotShaftPower,xval) )))
 
             cMot = cMot + 1; %#ok<*SAGROW>
-            matchingRPM(cMot) = xPowerMatch;
-            matchingThrottle(cMot) = throttle;
-            matchingElecPower(cMot) = polyval(funMotElecPower,xPowerMatch);
-            matchingShaftPower(cMot) = polyval(funMotShaftPower,xPowerMatch);
-            matchingCurrent(cMot) = polyval(funMotCurrent,xPowerMatch);
+
+%             xPowerMatch = fzero(@(x) polyval(funPropPower{cProp},x)-polyval(funMotShaftPower,x),...
+%                 [min(motRPM), max(motRPM)]);
+            xPowerMatch = fzero(@(x) funPropPower{cProp}(x)-polyval(funMotShaftPower,x),...
+                [min(motRPM), max(motRPM)]);
+
+            matchingRPM = xPowerMatch;
+            matchingThrottle = throttle;
+            matchingElecPower = polyval(funMotElecPower,xPowerMatch);
+            matchingShaftPower = polyval(funMotShaftPower,xPowerMatch);
+            matchingCurrent = polyval(funMotCurrent,xPowerMatch);
 
             set(0,'CurrentFigure',f1)
-            plot(xPowerMatch,polyval(funPropPower{cProp},xPowerMatch),'ko','MarkerSize',6,...
-                'HandleVisibility','off')
+%             plot(xPowerMatch,funPropPower{cProp},xPowerMatch),...
+%                 'ko','MarkerSize',6,'HandleVisibility','off')
+            plot(xPowerMatch,funPropPower{cProp}(xPowerMatch),...
+                'ko','MarkerSize',6,'HandleVisibility','off')
 
 
-            xTorqueMatch = fzero(@(x) polyval(funPropTorque{cProp},x)-polyval(funMotTorque,x),...
+%             xTorqueMatch = fzero(@(x) polyval(funPropTorque{cProp},x)-polyval(funMotTorque,x),...
+%                 [min(motRPM), max(motRPM)]);
+            xTorqueMatch = fzero(@(x) funPropTorque{cProp}(x)-polyval(funMotTorque,x),...
                 [min(motRPM), max(motRPM)]);
 
             set(0,'CurrentFigure',f2)
-            plot(xTorqueMatch,polyval(funPropTorque{cProp},xTorqueMatch),'ko','MarkerSize',6,...
-                'HandleVisibility','off')
+%             plot(xTorqueMatch,polyval(funPropTorque{cProp},xTorqueMatch),...
+%                 'ko','MarkerSize',6,'HandleVisibility','off')
+            plot(xTorqueMatch,funPropTorque{cProp}(xTorqueMatch),...
+                'ko','MarkerSize',6,'HandleVisibility','off')
 
         else
             disp(['No intersection found for motor at ', num2str(V), ...
-                ' volt and propeller airspeed ', num2str(queryVelocity), ' m/s'])
+                ' volt and propeller airspeed ', num2str(velArray(cProp)), ' m/s'])
         end % if-else
-    end % for
 
-end
+        % Write an array with airspeed, RPM, power, and torque matched
+        %         if cMot > 0 % if at least an intersection is found
+        %
+        %             cArr = cArr + 1;
+        %             xPowerMatchArray{cArr} = [velArray(cProp),xPowerMatch];
+        %
+        %         end % if
+
+    end % for-loop sweeping airspeed array
+
+end % for-loop sweeping voltage array
 
 figure(1)
-grid on, hold off, legend(Location="best")
+ylim([0,inf]), grid on, hold off, legend(Location="best")
 xlabel('RPM'), ylabel('Shaft Power, W')
 title(filename,'Interpreter','none')
 
 figure(2)
-grid on, hold off, legend(Location="best")
+ylim([0,inf]), grid on, hold off, legend(Location="best")
 xlabel('RPM'), ylabel('Torque, Nm')
 title(filename,'Interpreter','none')
 
