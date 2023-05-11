@@ -34,7 +34,7 @@ Rm = 0.034;             % motor internal resistance, Ohm
 
 % Import propeller data from csv file. Columns order as follows:
 % RPM, Power (W), Thrust (N), Torque (Nm)
-filename = 'therm-prop-flowspeed-35ms.csv';
+filename = 'dep-prop-flowspeed-35ms.csv';
 propTable = readtable(filename);
 propData = propTable.Variables;
 
@@ -58,7 +58,7 @@ yProp = polyval(funPropTorque,xProp);    % y array of propeller torque
 plot(xProp,yProp,'k','LineWidth',2,'DisplayName','Prop Torque')
 
 c = 0;  % counter
-volt = linspace(4,Vmax,10); % give a reasonable lower voltage
+volt = linspace(Vmax/10,Vmax,10); % give a reasonable lower voltage
 for V = volt
 
     throttle = V/Vmax*100;  % assume throttle linear with voltage
