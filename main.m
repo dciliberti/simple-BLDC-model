@@ -20,8 +20,8 @@
 close all; clearvars; clc
 
 %% Input data
-motorName = 'Hacker A60-18-L-V4-kv149';
-V = 45.0;               % Voltage
+motorName = 'Hacker A30-12XL V4';
+V = 15.0;               % Voltage
 Imax = 60;              % max current, Ampere (useful for axis limits)
 
 % Motor constants
@@ -70,7 +70,7 @@ t.TileSpacing = 'compact';
 
 %% Build a motor map
 
-volt = linspace(4,V,10);    % give reasonable voltage range
+volt = linspace(V/10,V,10);    % give reasonable voltage range
 maxTorque = zeros(1,numel(volt));
 revMaxTorque = zeros(1,numel(volt));
 x = []; %#ok<*AGROW> 
