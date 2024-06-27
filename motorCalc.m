@@ -1,4 +1,4 @@
-function [Imot,Pmot,Pload_array,Qload,omega,eff] = ...
+function [Imot,Pelec,Pshaft_array,Qtorque,omega,eff] = ...
     motorCalc(Vmax,Kv,I0,Vref,Rm,phi,Imax)
 % MOTORCALC(Vmax,KV,I0,Vref,Rm) calculates motor current, power, angular speed,
 % and torque from motor characteristics and applied voltage.
@@ -26,7 +26,7 @@ function [Imot,Pmot,Pload_array,Qload,omega,eff] = ...
 if nargin < 5
     phi = 1.0;
 elseif phi < 0 || phi > 1
-    error('throttle value out of range (0,1): ',phi)
+    error('Throttle value out of range (0,1)')
 end
 
 % Check if maximum current has been assigned
@@ -38,37 +38,37 @@ V = phi*Vmax;           % applied voltage
 I0 = I0*sqrt(V/Vref);   % scale no-load current with applied voltage
 
 Pno_load = V * I0;
-Pload_max = 0.999*(V^2/(4*Rm) - Pno_load);
+Pshaft_max = 0.999*(V^2/(4*Rm) - Pno_load);
 
 steps = 1000;
-Pload_array = linspace(0,Pload_max,steps);
+Pshaft_array = linspace(0,Pshaft_max,steps);
 
 c = 0;
 Imot = zeros(1,steps);
-Pmot = Imot;
-omega = Imot;
-Qload = Imot;
-eff = Imot;
-for Pload = Pload_array
+Pelec = zeros(1,steps);
+omega = zeros(1,steps);
+Qtorque = zeros(1,steps);
+eff = zeros(1,steps);
+for Pload = Pshaft_array
     c = c + 1;
     
     Imot(c) = (Vmax - sqrt(Vmax^2 - 4*Rm*(Pno_load + Pload))) / (2*Rm);
     
-    Pmot(c) = V * Imot(c);
+    Pelec(c) = Vmax * Imot(c);
     RPM = Kv * (V - Rm*Imot(c));
     omega(c) = 2*pi/60 * RPM;
-    Qload(c) = Pload/omega(c);
-    eff(c) = Pload/Pmot(c);
+    Qtorque(c) = Pload/omega(c);
+    eff(c) = Pload/Pelec(c);
 end
 
 % Delete motor data when motor current is above max current
 if Imax > 0
     idx = find(Imot < Imax);
-    Pload_array = Pload_array(idx);
+    Pshaft_array = Pshaft_array(idx);
     Imot = Imot(idx);
-    Pmot = Pmot(idx);
+    Pelec = Pelec(idx);
     omega = omega(idx);
-    Qload = Qload(idx);
+    Qtorque = Qtorque(idx);
     eff = eff(idx);
 end
 
