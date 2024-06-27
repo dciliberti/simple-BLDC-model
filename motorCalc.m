@@ -1,11 +1,13 @@
-function [Imot,Pmot,Pload_array,Qload,omega,eff] = motorCalc(V,Kv,I0,Rm,Imax)
-% MOTORCALC(V,KV,I0,Rm) calculates motor current, power, angular speed,
+function [Imot,Pmot,Pload_array,Qload,omega,eff] = ...
+    motorCalc(Vmax,Kv,I0,Vref,Rm,phi,Imax)
+% MOTORCALC(Vmax,KV,I0,Vref,Rm) calculates motor current, power, angular speed,
 % and torque from motor characteristics and applied voltage.
-% MOTORCALC(V,KV,I0,Rm,Imax) truncate output values when I > Imax.
+% MOTORCALC(Vmax,KV,I0,Vref,Rm,phi) scales V with throttle value phi (0 to 1).
+% MOTORCALC(Vmax,KV,I0,Rm,Vref,phi,Imax) truncates output values when I > Imax.
 % A virtual load is applied from zero to the maximum possible value to
 % generate an array of output.
 
-%     Copyright (C) 2022 Danilo Ciliberti danilo.ciliberti@unina.it
+%     Copyright (C) 2024 Danilo Ciliberti danilo.ciliberti@unina.it
 %
 %     This program is free software: you can redistribute it and/or modify
 %     it under the terms of the GNU General Public License as published by
@@ -20,13 +22,23 @@ function [Imot,Pmot,Pload_array,Qload,omega,eff] = motorCalc(V,Kv,I0,Rm,Imax)
 %     You should have received a copy of the GNU General Public License
 %     along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-% Check if maximum current has been assigned
+% Check if throttle value has been assigned and it has the correct range
 if nargin < 5
-   Imax = 0; 
+    phi = 1.0;
+elseif phi < 0 || phi > 1
+    error('throttle value out of range (0,1): ',phi)
 end
 
-Piron = V * I0;
-Pload_max = 0.999*(V^2/(4*Rm) - Piron);
+% Check if maximum current has been assigned
+if nargin < 6
+   Imax = 0;
+end
+
+V = phi*Vmax;           % applied voltage
+I0 = I0*sqrt(V/Vref);   % scale no-load current with applied voltage
+
+Pno_load = V * I0;
+Pload_max = 0.999*(V^2/(4*Rm) - Pno_load);
 
 steps = 1000;
 Pload_array = linspace(0,Pload_max,steps);
@@ -40,7 +52,7 @@ eff = Imot;
 for Pload = Pload_array
     c = c + 1;
     
-    Imot(c) = (V - sqrt(V^2 - 4*Rm*(Piron + Pload))) / (2*Rm);
+    Imot(c) = (Vmax - sqrt(Vmax^2 - 4*Rm*(Pno_load + Pload))) / (2*Rm);
     
     Pmot(c) = V * Imot(c);
     RPM = Kv * (V - Rm*Imot(c));
