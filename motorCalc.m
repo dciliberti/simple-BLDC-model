@@ -36,10 +36,10 @@ end
 
 V = phi*Vmax;           % applied voltage
 I0 = I0*sqrt(V/Vref);   % scale no-load current with applied voltage
+Pno_load = V * I0;      % no-load power losses
+Pshaft_max = 0.999*(V^2/(4*Rm) - Pno_load); % maximum shaft power
 
-Pno_load = V * I0;
-Pshaft_max = 0.999*(V^2/(4*Rm) - Pno_load);
-
+% Initialize shaft power array
 steps = 1000;
 Pshaft_array = linspace(0,Pshaft_max,steps);
 
@@ -52,6 +52,7 @@ eff = zeros(1,steps);
 for Pload = Pshaft_array
     c = c + 1;
     
+    % Small root of the second order equation (physical solution)
     Imot(c) = (Vmax - sqrt(Vmax^2 - 4*Rm*(Pno_load + Pload))) / (2*Rm);
     
     Pelec(c) = Vmax * Imot(c);
