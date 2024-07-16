@@ -26,16 +26,17 @@
 close all; clearvars; clc
 
 %% Initial input data
-Vmax = 15.0;            % max voltage (limited by the motor)
+Vmax = 24.0;            % max voltage (limited by the motor)
 Kv = 700;               % motor RPM/Volt constant
-I0 = 1.5;               % motor idle (no load) current, A
+I0ref = 1.5;            % motor no-load current at reference voltage, A
+Vref = 8.4;             % reference voltage for no-load current value, V
 Imax = 60;              % max current, A
 Rm = 0.034;             % motor internal resistance, Ohm
 
 % Import propeller data from csv file. Columns order as follows:
 % RPM, Power (W), Thrust (N), Torque (Nm)
-filename = 'dep-prop-flowspeed-35ms.csv';
-propTable = readtable(filename);
+[filename, pathname] = uigetfile({'*.csv'},'Select propeller performance file');
+propTable = readtable([pathname,filename]);
 propData = propTable.Variables;
 
 % Propeller data curves fitting with RPM as the independent variable
@@ -46,7 +47,7 @@ funPropPower = polyfitB0(propData(:,1),propData(:,2),2,0);
 funPropThrust = polyfitB0(propData(:,1),propData(:,3),2,0);
 funPropTorque = polyfitB0(propData(:,1),propData(:,4),2,0);
 
-%% Cycle over several voltage (simulate motor throttle)
+%% Cycle over several throttle values
 
 figure(1), hold on
 xProp = linspace(0,max(propData(:,1))); % x array of propeller RPM, from 0
@@ -58,12 +59,13 @@ yProp = polyval(funPropTorque,xProp);    % y array of propeller torque
 plot(xProp,yProp,'k','LineWidth',2,'DisplayName','Prop Torque')
 
 c = 0;  % counter
-volt = linspace(Vmax/10,Vmax,10); % give a reasonable lower voltage
-for V = volt
+for phi = 0:0.1:1
 
-    throttle = V/Vmax*100;  % assume throttle linear with voltage
+    V = Vmax*phi;
+    throttle = phi*100;
 
-    [Imot, Pelec, Pshaft, Torque, omega, ~] = motorCalc(V,Kv,I0,Rm,Imax);
+    [Imot, Pelec, Pshaft, Torque, omega, ~] = ...
+    motorCalc(Vmax,Kv,I0ref,Vref,Rm,phi,Imax);
     RPM = omega*60/(2*pi);
 
     % Motor data curves fitting with RPM as the independent variable
