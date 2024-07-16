@@ -30,7 +30,7 @@ Vmax = 24.0;            % max voltage (limited by the motor)
 Kv = 700;               % motor RPM/Volt constant
 I0ref = 1.5;            % motor no-load current at reference voltage, A
 Vref = 8.4;             % reference voltage for no-load current value, V
-Imax = 60;              % max current, A
+Imax = 40;              % max current, A
 Rm = 0.034;             % motor internal resistance, Ohm
 
 % Import propeller data from csv file. Columns order as follows:
