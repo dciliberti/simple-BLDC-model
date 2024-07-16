@@ -29,7 +29,8 @@ close all; clearvars; clc
 %% Initial input data
 Vmax = 45.0;            % max voltage (limited by the motor)
 Kv = 149;               % motor RPM/Volt constant
-I0 = 1.6;               % motor idle (no load) current, A
+I0ref = 1.6;            % motor idle (no load) current at reference voltage, A
+Vref = 8.4;             % reference voltage for the no-load current, volt
 Imax = 60;              % max current, A
 Rm = 0.020;             % motor internal resistance, Ohm
 
@@ -145,15 +146,15 @@ for queryVelocity = velArray % cycle over velocity array
 
 end
 
-%% Cycle over several voltage (simulate motor throttle)
+%% Cycle over several throttle values
 cMot = 0;  % motor-prop matching counter
-% cArr = 0;   % array counter
-volt = linspace(Vmax/10,Vmax,10); % sweep over 10 increments in throttle
-for V = volt
+for phi = 0:0.1:1
 
-    throttle = V/Vmax*100;  % assume throttle linear with voltage
+    V = Vmax*phi;
+    throttle = phi*100;
 
-    [Imot, motPelec, motPshaft, motTorque, motOmega, ~] = motorCalc(V,Kv,I0,Rm,Imax);
+    [Imot, motPelec, motPshaft, motTorque, motOmega, ~] = ...
+    motorCalc(Vmax,Kv,I0ref,Vref,Rm,phi,Imax);
     motRPM = motOmega*60/(2*pi);
 
     % Motor data curves fitting with RPM as the independent variable

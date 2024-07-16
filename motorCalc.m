@@ -1,5 +1,5 @@
 function [Imot,Pelec,Pshaft_array,Qtorque,omega,eff] = ...
-    motorCalc(Vmax,Kv,I0,Vref,Rm,phi,Imax)
+    motorCalc(Vmax,Kv,I0ref,Vref,Rm,phi,Imax)
 % MOTORCALC(Vmax,KV,I0,Vref,Rm) calculates motor current, power, angular speed,
 % and torque from motor characteristics and applied voltage.
 % MOTORCALC(Vmax,KV,I0,Vref,Rm,phi) scales V with throttle value phi (0 to 1).
@@ -35,7 +35,7 @@ if nargin < 6
 end
 
 V = phi*Vmax;           % applied voltage
-I0 = I0*sqrt(V/Vref);   % scale no-load current with applied voltage
+I0 = I0ref*sqrt(V/Vref);   % scale no-load current with applied voltage
 Pno_load = V * I0;      % no-load power losses
 Pshaft_max = 0.999*(V^2/(4*Rm) - Pno_load); % maximum shaft power
 
