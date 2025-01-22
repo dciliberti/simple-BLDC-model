@@ -26,8 +26,8 @@
 close all; clearvars; clc
 
 %% Initial input data
-Vmax = 24.0;            % max voltage (limited by the motor)
-Kv = 700;               % motor RPM/Volt constant
+Vmax = 60.0;            % max voltage (limited by the motor)
+Kv = 185;               % motor RPM/Volt constant
 I0ref = 1.5;            % motor no-load current at reference voltage, A
 Vref = 8.4;             % reference voltage for no-load current value, V
 Imax = 40;              % max current, A
